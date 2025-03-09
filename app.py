@@ -1,4 +1,3 @@
-import cv2
 import mysql.connector
 from datetime import date
 import streamlit as st
@@ -9,8 +8,6 @@ import json
 import pyzbar.pyzbar as pyzbar
 
 from groq import Groq
-import os
-from dotenv import load_dotenv
 import base64
 from io import BytesIO
 
