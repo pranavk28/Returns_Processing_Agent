@@ -114,7 +114,7 @@ elif st.session_state.screen == "scan_qr":
             cursor.close()
         else:
             st.error("Could not read qr code. Please retry")
-    col1, col2 = st.columns(2)
+    _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
     with col1:
         st.button("Process return", on_click = set_screen, args=["scan_qr",()])
     with col2:
@@ -124,7 +124,7 @@ elif st.session_state.screen == "scan_qr":
 elif st.session_state.screen == "select_defect":
     st.title("Select Defect Type")
     defect_type = st.radio("Choose defect type:", ["Packaging", "Physical", "Working"])
-    col1, col2 = st.columns(2)
+    _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
     with col1:
         st.button("Next", on_click = set_screen, args=["select_defect",(defect_type,)])
     with col2:
@@ -179,7 +179,7 @@ elif st.session_state.screen == "upload_defect_image":
         else:
             st.error("Sytem failed to get an output. Retry input or continue to next screen for manual entry.") 
 
-    col1, col2 = st.columns(2)
+    _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
     with col1:
         st.button("Verify Defect", on_click = set_screen, args=["upload_defect_image",()])
     with col2:
@@ -202,7 +202,7 @@ elif st.session_state.screen == "verify_defect":
     else:
         defect_input = st.text_area("Defect details:", defect_text)
 
-    col1, col2 = st.columns(2)
+    _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
     with col1:
         st.button("Process Return", on_click = set_screen, args=["verify_defect",(defect_input,)])
     with col2:
