@@ -82,7 +82,7 @@ def back_screen():
 # Screen: Employee Login (Any username and password for now)
 if st.session_state.screen == "login":
     st.title("Return Processing Employee Login")
-    st.write("Any username and password will work for now")
+    st.write("(Any username and password will work for now)")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
