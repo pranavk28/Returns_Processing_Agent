@@ -37,7 +37,6 @@ if "db_object" not in st.session_state:
       database="returns_management"
     )
 if "env_vars" not in st.session_state:
-    load_dotenv()
     st.session_state.env_vars = {'GROQ_API_KEY' : st.secrets('GROQ_API_KEY')}
 if "llm_client" not in st.session_state:
     st.session_state.llm_client = Groq(
