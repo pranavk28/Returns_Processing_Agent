@@ -2,6 +2,6 @@ groq
 mysql-connector-python
 numpy
 pandas
-pillow
+Pillow
 pyzbar
 zbar
