@@ -4,4 +4,4 @@ numpy
 pandas
 Pillow
 pyzbar
-zbar
+opencv-python
