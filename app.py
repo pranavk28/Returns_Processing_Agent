@@ -5,7 +5,7 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 import json
-import pyzbar.pyzbar as pyzbar
+from pyzbar import pyzbar
 
 from groq import Groq
 import base64
