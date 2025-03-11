@@ -126,7 +126,7 @@ elif st.session_state.screen == "scan_qr":
                     product = result[0][0]
                     model= result[0][1]
                     cursor.close()
-                    
+                    print(name,product,model)
                     st.write(f"Customer: {name} \n Purchase item: {product}, {model} \n Purchase Date: {purchase_details['purchase_date']}")
             else:
                 st.error("Could not read qr code. Please retry")
