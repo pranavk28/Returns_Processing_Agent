@@ -82,7 +82,6 @@ def back_screen():
 # Screen: Employee Login (Any username and password for now)
 if st.session_state.screen == "login":
     st.title("Return Processing Employee Login")
-    st.write("(Any username and password will work for now)")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
@@ -91,122 +90,157 @@ if st.session_state.screen == "login":
 # Screen: Scan QR Code (Upload Image)
 elif st.session_state.screen == "scan_qr":
     st.title("Scan QR Code to Get Purchase Details")
-    qr_image = st.file_uploader("Upload QR Code Image", type=["png", "jpg", "jpeg"])
-    if qr_image:
-        img = Image.open(qr_image)
-        purchase_details = json.loads(pyzbar.decode(img)[0].data.decode('utf-8'))
-        print(purchase_details)
-        if purchase_details["purchase_id"]:
-            st.success("Purchase details retrieved successfully!")
-            # Verify wether purchase is valid for return
-            cursor = st.session_state.db_object.cursor()
-            query = f"SELECT * FROM purchases where purchase_id = {purchase_details['purchase_id']} and (curdate() - purchase_date) < 7;"
-            cursor.execute(query)
-            if len(cursor.fetchall())<1:
-                st.error("Return is not valid")
+    inputs_container = st.container()
+    with inputs_container:
+        qr_image = st.file_uploader("Upload QR Code Image", type=["png", "jpg", "jpeg"])
+        if qr_image:
+            img = Image.open(qr_image)
+            purchase_details = json.loads(pyzbar.decode(img)[0].data.decode('utf-8'))
+            print(purchase_details)
+            if purchase_details["purchase_id"]:
+                st.success("Purchase details retrieved successfully!")
+                # Verify wether purchase is valid for return
+                cursor = st.session_state.db_object.cursor()
+                query = f"SELECT * FROM purchases where purchase_id = {purchase_details['purchase_id']} and (curdate() - purchase_date) < 7;"
+                cursor.execute(query)
+                if len(cursor.fetchall())<1:
+                    st.error("Return is not valid")
+                    cursor.close()
+                else:
+                    st.session_state.return_order = {
+                        "customer_id": purchase_details["customer_id"],
+                        "product_id": purchase_details["product_id"],
+                        "return_date": date.today().strftime("%Y/%m/%d")
+                    }
+                    st.write(f"Purchase details found:")
+                    cursor.close()
+                    cursor = st.session_state.db_object.cursor()
+                    query = f"SELECT name FROM customers where customer_id = {purchase_details['customer_id']};"
+                    cursor.execute(query)
+                    name = cursor.fetchall()[0][0]
+                    cursor.close()
+                    cursor = st.session_state.db_object.cursor()
+                    query = f"SELECT name, model FROM products where product_id = {purchase_details['product_id']};"
+                    cursor.execute(query)
+                    result = cursor.fetchall()
+                    product = result[0][0]
+                    model= result[0][1]
+                    cursor.close()
+                    
+                    st.write(f"Customer: {name} \n Purchase item: {product}, {model} \n Purchase Date: {purchase_details['purchase_date']}")
             else:
-                st.session_state.return_order = {
-                    "purchase_id": purchase_details["purchase_id"],
-                    "customer_id": purchase_details["customer_id"],
-                    "product_id": purchase_details["product_id"],
-                    "return_date": date.today().strftime("%Y/%m/%d")
-                }
-            cursor.close()
-        else:
-            st.error("Could not read qr code. Please retry")
-    _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
-    with col1:
-        st.button("Process return", on_click = set_screen, args=["scan_qr",()])
-    with col2:
-        st.button("Back", on_click=back_screen)
+                st.error("Could not read qr code. Please retry")
+    st.empty()
+    buttons_container = st.container()    
+    with buttons_container:
+        _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
+        with col1:
+            st.button("Process return", on_click = set_screen, args=["scan_qr",()])
+        with col2:
+            st.button("Back", on_click=back_screen)
 
 # Screen: Select Defect Type
 elif st.session_state.screen == "select_defect":
     st.title("Select Defect Type")
-    defect_type = st.radio("Choose defect type:", ["Packaging", "Physical", "Working"])
-    _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
-    with col1:
-        st.button("Next", on_click = set_screen, args=["select_defect",(defect_type,)])
-    with col2:
-        st.button("Back", on_click=back_screen)
+    inputs_container = st.container()
+    with inputs_container:
+        defect_type = st.radio("Choose defect type:", ["Packaging", "Physical", "Working"])
+    buttons_container = st.container()    
+    st.empty()
+    with buttons_container:
+        _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
+        with col1:
+            st.button("Next", on_click = set_screen, args=["select_defect",(defect_type,)])
+        with col2:
+            st.button("Back", on_click=back_screen)
 
 # Screen: Upload Defect Image (for Packaging or Physical defect)
 elif st.session_state.screen == "upload_defect_image":
     st.title("Upload Defect Image")
-    defect_image = st.file_uploader("Upload image of the defect", type=["png", "jpg", "jpeg"])
-    if defect_image:
-        img = Image.open(defect_image)
-        img_base64 = image_to_base64(img)
-        if st.session_state.defect_type == "Physical":
-            prompt = "Tell me if the item in this image has one of the following damage types or no damage: Cracked surface, paint or color worn off, broken item, damaged wires, burnt surface\n Give output in this format only and no other information: Damaged - [Yes/No], Damage type - [Damage type]"
-        elif st.session_state.defect_type == "Packaging":
-            prompt = "Tell me if the package in this image is in good condition or not\n Give output in this format only and no other information: Damaged - [Yes/No]"
+    inputs_container = st.container()
+    with inputs_container:
+        defect_image = st.file_uploader("Upload image of the defect", type=["png", "jpg", "jpeg"])
+        if defect_image:
+            img = Image.open(defect_image)
+            img_base64 = image_to_base64(img)
+            if st.session_state.defect_type == "Physical":
+                prompt = "Tell me if the item in this image has one of the following damage types or no damage: Cracked surface, paint or color worn off, broken item, damaged wires, burnt surface\n Give output in this format only and no other information: Damaged - [Yes/No], Damage type - [Damage type]"
+            elif st.session_state.defect_type == "Packaging":
+                prompt = "Tell me if the package in this image is in good condition or not\n Give output in this format only and no other information: Damaged - [Yes/No]"
+            
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt
+                        },
+                        {
+                            "type": "image_url", 
+                            "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}
+                        }
+                    ]
+                }
+            ]
         
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": prompt
-                    },
-                    {
-                        "type": "image_url", 
-                        "image_url": {"url": f"data:image/jpeg;base64,{img_base64}"}
-                    }
-                ]
-            }
-        ]
-    
-        completion = st.session_state.llm_client.chat.completions.create(
-            model="llama-3.2-11b-vision-preview", 
-            messages=messages, 
-            max_tokens=500,
-        )
-        response = completion.choices[0].message.content
-        
-        if 'yes' in response.lower():
-            st.session_state.defect_present = True
-            if st.session_state.defect_type == 'Physical':
-                st.session_state.defect_details = response.split(',')[1].split('-')[1].strip().replace(".","")
+            completion = st.session_state.llm_client.chat.completions.create(
+                model="llama-3.2-11b-vision-preview", 
+                messages=messages, 
+                max_tokens=500,
+            )
+            response = completion.choices[0].message.content
+            
+            if 'yes' in response.lower():
+                st.session_state.defect_present = True
+                if st.session_state.defect_type == 'Physical':
+                    st.session_state.defect_details = response.split(',')[1].split('-')[1].strip().replace(".","")
+                else:
+                    st.session_state.defect_details = 'Damaged packaging'
+                st.success("Defect detected successfully!")
+            elif 'no' in response.lower():
+                st.error("Defect not detected. Continue to next screen for manual entry if incorrect detection.")
+                #Allowing human action in the loop in case of model inaccuracy
+                st.session_state.defect_present = False
             else:
-                st.session_state.defect_details = 'Damaged packaging'
-            st.success("Defect detected successfully!")
-        elif 'no' in response.lower():
-            st.error("Defect not detected. Continue to next screen for manual entry if incorrect detection.")
-            #Allowing human action in the loop in case of model inaccuracy
-            st.session_state.defect_present = False
-        else:
-            st.error("Sytem failed to get an output. Retry input or continue to next screen for manual entry.") 
+                st.error("Sytem failed to get an output. Retry input or continue to next screen for manual entry.") 
 
-    _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
-    with col1:
-        st.button("Verify Defect", on_click = set_screen, args=["upload_defect_image",()])
-    with col2:
-        st.button("Back", on_click=back_screen)
+    buttons_container = st.container()   
+    st.empty() 
+    with buttons_container:
+        _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
+        with col1:
+            st.button("Verify Defect", on_click = set_screen, args=["upload_defect_image",()])
+        with col2:
+            st.button("Back", on_click=back_screen)
 
 # Screen: Verify Defect
 elif st.session_state.screen == "verify_defect":
-    st.title("Verify Defect Details")
-    if st.session_state.defect_type == "Packaging":
-        defect_text = "Packaging damaged"
-    elif st.session_state.defect_type == "Physical":
-        defect_text = st.session_state.defect_details
-    else:
-        defect_text = ""
+    inputs_container = st.container()
+    with inputs_container:
+        st.title("Verify Defect Details")
+        if st.session_state.defect_type == "Packaging":
+            defect_text = "Packaging damaged"
+        elif st.session_state.defect_type == "Physical":
+            defect_text = st.session_state.defect_details
+        else:
+            defect_text = ""
 
-    if st.session_state.defect_type == "Working":
-        st.write("Describe the working defect manually:")
-        defect_input = st.text_area("Enter the verified defect details")
-        
-    else:
-        defect_input = st.text_area("Defect details:", defect_text)
+        if st.session_state.defect_type == "Working":
+            st.write("Describe the working defect manually:")
+            defect_input = st.text_area("Enter the verified defect details")
+            
+        else:
+            defect_input = st.text_area("Defect details:", defect_text)
 
-    _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
-    with col1:
-        st.button("Process Return", on_click = set_screen, args=["verify_defect",(defect_input,)])
-    with col2:
-        st.button("Back", on_click=back_screen)
+    buttons_container = st.container()
+    st.empty()    
+    with buttons_container:
+        _, col1, _, col2, _ = st.columns((1,1,0.5,1,0.7))
+        with col1:
+            st.button("Process Return", on_click = set_screen, args=["verify_defect",(defect_input,)])
+        with col2:
+            st.button("Back", on_click=back_screen)
 
 # Screen: Final Confirmation
 elif st.session_state.screen == "final_screen":
@@ -216,7 +250,7 @@ elif st.session_state.screen == "final_screen":
         #In case of inaccurate detection model response and manual correction return is marked pending for further inspection before approval
         status = 'Pending'
     cursor = st.session_state.db_object.cursor()
-    query = f"INSERT INTO `returns_management`.`returns` (`purchase_id`,`customer_id`, `product_id`, `return_date`, `status`, `defect_type`, `defect_detail`) VALUES ({st.session_state.return_order['purchase_id']},{st.session_state.return_order['customer_id']},{st.session_state.return_order['product_id']},curdate(),'{status}','{st.session_state.defect_type}','{st.session_state.defect_details}');"
+    query = f"INSERT INTO `returns_management`.`returns` (`customer_id`, `product_id`, `return_date`, `status`, `defect_type`, `defect_detail`) VALUES ({st.session_state.return_order['customer_id']},{st.session_state.return_order['product_id']},curdate(),'{status}','{st.session_state.defect_type}','{st.session_state.defect_details}');"
     print(query)
     cursor.execute(query)
     st.session_state.db_object.commit()
