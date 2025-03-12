@@ -108,6 +108,7 @@ elif st.session_state.screen == "scan_qr":
                     cursor.close()
                 else:
                     st.session_state.return_order = {
+                        "purchase_id": purchase_details["purchase_id"],
                         "customer_id": purchase_details["customer_id"],
                         "product_id": purchase_details["product_id"],
                         "return_date": date.today().strftime("%Y/%m/%d")
@@ -249,7 +250,7 @@ elif st.session_state.screen == "final_screen":
         #In case of inaccurate detection model response and manual correction return is marked pending for further inspection before approval
         status = 'Pending'
     cursor = st.session_state.db_object.cursor()
-    query = f"INSERT INTO `returns_management`.`returns` (`customer_id`, `product_id`, `return_date`, `status`, `defect_type`, `defect_detail`) VALUES ({st.session_state.return_order['customer_id']},{st.session_state.return_order['product_id']},curdate(),'{status}','{st.session_state.defect_type}','{st.session_state.defect_details}');"
+    query = f"INSERT INTO `returns_management`.`returns` (`purchase_id`,`customer_id`, `product_id`, `return_date`, `status`, `defect_type`, `defect_detail`) VALUES ({st.session_state.return_order['purchase_id']},{st.session_state.return_order['customer_id']},{st.session_state.return_order['product_id']},curdate(),'{status}','{st.session_state.defect_type}','{st.session_state.defect_details}');"
     print(query)
     cursor.execute(query)
     st.session_state.db_object.commit()
