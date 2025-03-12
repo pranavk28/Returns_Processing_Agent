@@ -31,9 +31,9 @@ if "return_order" not in st.session_state:
     st.session_state.return_order = None
 if "db_object" not in st.session_state:
     st.session_state.db_object = mysql.connector.connect(
-      host="34.44.133.162",
-      user="user",
-      password="Priyamab$123",
+      host=st.secrets['DB_host'],
+      user=st.secrets['DB_user'],
+      password=st.secrets['DB_password'],
       database="returns_management"
     )
 if "env_vars" not in st.session_state:
